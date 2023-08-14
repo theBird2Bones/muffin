@@ -478,7 +478,7 @@ trait CodecSupportLow[To[_], From[_]] extends PrimitivesSupport[To, From] {
         json[Action]
           .field("id", _ => button.id)
           .field("name", _ => button.name)
-          .field[RawIntegration]("integration", _ => button.raw)
+          .field[Option[RawIntegration]]("integration", _ => button.raw.some)
           .field("style", _ => button.style)
           .field("type", _ => "button")
           .build
@@ -486,7 +486,7 @@ trait CodecSupportLow[To[_], From[_]] extends PrimitivesSupport[To, From] {
         json[Action]
           .field("id", _ => select.id)
           .field("name", _ => select.name)
-          .field[RawIntegration]("integration", _ => select.raw)
+          .field[Option[RawIntegration]]("integration", _ => select.raw.some)
           .field("options", _ => select.options)
           .field("data_source", _ => select.dataSource)
           .field("type", _ => "select")
@@ -495,12 +495,12 @@ trait CodecSupportLow[To[_], From[_]] extends PrimitivesSupport[To, From] {
 
   given ActionFrom: From[Action] =
     parsing
-      .field[RawIntegration]("integration")
+      .field[Option[RawIntegration]]("integration")
       .field[String]("name")
       .field[String]("id")
       .field[String]("type")
       .select {
-        case "select" *: id *: name *: integration *: EmptyTuple =>
+        case "select" *: id *: name *: Some(integration) *: EmptyTuple =>
           parsing
             .field[Option[DataSource]]("data_source")
             .field[Option[List[SelectOption]]]("options")
@@ -508,7 +508,7 @@ trait CodecSupportLow[To[_], From[_]] extends PrimitivesSupport[To, From] {
               case options *: dataSource *: EmptyTuple =>
                 Action.Select(id, name, options.toList.flatten, dataSource)(integration)
             }
-        case "button" *: id *: name *: integration *: EmptyTuple =>
+        case "button" *: id *: name *: Some(integration) *: EmptyTuple =>
           parsing
             .field[Option[Style]]("style")
             .build {
@@ -531,10 +531,11 @@ trait CodecSupportLow[To[_], From[_]] extends PrimitivesSupport[To, From] {
 
   given IntegrationFrom: From[RawIntegration] =
     parsing
-      .rawField("context")
+//      .rawField("context")
       .field[String]("url")
       .build {
-        case url *: integration *: EmptyTuple => RawIntegration(url, integration)
+        case url *: EmptyTuple => 
+          RawIntegration(url, None)
       }
 
   given StyleTo: To[Style] = json[Style, String](_.toString.toLowerCase)
@@ -543,7 +544,7 @@ trait CodecSupportLow[To[_], From[_]] extends PrimitivesSupport[To, From] {
 
   given PropsTo: To[Props] = json[Props].field[List[Attachment]]("attachments", _.attachments).build
 
-  given PropsFrom: From[Props] =
+  given PropsFrom: From[Props] = 
     parsing
       .field[Option[List[Attachment]]]("attachments")
       .build {

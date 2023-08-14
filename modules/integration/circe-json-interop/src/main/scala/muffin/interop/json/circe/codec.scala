@@ -115,7 +115,16 @@ trait CodecLow2 extends CodecSupport[Encoder, Decoder] {
     }
 
     def rawField(fieldName: String, fieldValue: T => String): JsonRequestBuilder[T, Encoder] = {
-      val fun = (st: T, js: JsonObject) => js.add(fieldName, parse(fieldValue(st)).getOrElse(Json.Null))
+      val fun = {
+        (st: T, js: JsonObject) =>
+
+          println("A----------------A")
+          println(st)
+          println("B-f---------------B")
+          
+          
+        js.add(fieldName, parse(fieldValue(st)).getOrElse(Json.Null))
+      }
       CirceJsonBuilder(fun :: funs)
     }
 
@@ -139,9 +148,11 @@ trait CodecLow2 extends CodecSupport[Encoder, Decoder] {
 
     def rawField(name: String): JsonResponseBuilder[Decoder, Option[String] *: Decoders] =
       CirceResponseBuilder[Option[String] *: Decoders] {
-        decoders.flatMap(all =>
+        decoders.flatMap { all =>
+          println("----AAA-----BBB----")
+
           Decoder[Option[Json]].at(name).map(_.map(_.noSpaces) *: all)
-        )
+        }
       }
 
     def internal[X: Decoder](name: String): JsonResponseBuilder[Decoder, X *: Decoders] =
