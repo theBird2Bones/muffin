@@ -60,7 +60,10 @@ class SttpClient[F[_]: MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any],
           }
       }
       .response(asString.mapLeft(MuffinError.Http.apply))
-      .mapResponse(_.flatMap(Decode[Out].apply))
+      .mapResponse(_.map{
+        asdasdasd => println(asdasdasd)
+          asdasdasd
+      }.flatMap(Decode[Out].apply))
 
     backend.send(req)
       .map(_.body)
